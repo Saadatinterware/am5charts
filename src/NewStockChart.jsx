@@ -144,13 +144,14 @@ const NewStockChart = () => {
   // data
   const generateChartData = (series) => {
     const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&limit=1000&interval=1m';
+    // const url = 'http://192.168.100.80:8800/match-trader-klines?s=BTCUSD&tf=1m&userId=1&sId=2418&categoryId=2';
 
     am5.net
       .load(url)
       .then(function (result) {
         // Set data on all series of the chart
         // const res = am5.JSONParser.parse(result.response);
-        console.log('resut', JSON.parse(result.response));
+        // console.log('resut', JSON.parse(result.response));
         let res = JSON.parse(result.response)
 
         // if (!res || !res.data || !Array.isArray(res.data)) {
@@ -184,6 +185,19 @@ const NewStockChart = () => {
         });
 
 
+        // const res = am5.JSONParser.parse(result.response);
+        // const chartData = res.data.map((item) => {
+        //   return {
+        //     Date: new Date(item.time).getTime(),
+        //     Open: parseFloat(item.open),
+        //     High: parseFloat(item.high),
+        //     Low: parseFloat(item.low),
+        //     Close: parseFloat(item.close),
+        //     Volume: parseFloat(item.volume),
+        //   };
+        // });
+
+
         // // Set data
         // am5.array.each(series, function (item) {
         //   item.data.setAll(chartData);
@@ -212,6 +226,7 @@ const NewStockChart = () => {
     // });
 
     myTheme.rule("Grid").setAll({
+      // fill: am5.color(0x808080),
       stroke: am5.color(0x808080),
       strokeWidth: 1,
     });
@@ -240,16 +255,31 @@ const NewStockChart = () => {
     //   myTheme,
     // ]);
 
-    root.setThemes([
-      am5themes_Animated.new(root),
-      // am5themes_Dark.new(root),
-      myTheme,
-    ]);
+    // root.setThemes([
+    //   am5themes_Animated.new(root),
+    //   am5themes_Dark.new(root),
+    //   myTheme,
+    // ]);
+
+    //     root.setThemes(
+    //    [am5themes_Animated.new(root), am5themes_Dark.new(root), myTheme],
+    // );
+
+    // root.set("background", am5.Rectangle.new(root, {
+    //   fill: am5.color(0xf0f0f0), // Replace with your desired color code
+    //   fillOpacity: 1
+    // }));
+
+  //   root.container.set("background", am5.Rectangle.new(root, {
+  //     fill: am5.color(0xf3f3f3) // Set your desired color here
+  // }));
+    
 
     // Create a stock chart
     stockChart = root.container.children.push(
       am5stock.StockChart.new(root, {
-        paddingRight: 0
+        paddingRight: 0,
+        // background: am5.color('rgb(17, 209, 97)')
       })
     );
     setMyStockChart(stockChart);
@@ -262,7 +292,9 @@ const NewStockChart = () => {
       am5stock.StockPanel.new(root, {
         wheelY: "zoomX",
         panX: true,
-        panY: true
+        panY: true,
+        pinchZoomX: true,
+        // fill: am5.color(0xf3f3f3)
       })
     );
 
@@ -281,7 +313,8 @@ const NewStockChart = () => {
 
     let valueAxis = mainPanel.yAxes.push(
       am5xy.ValueAxis.new(root, {
-        start: 0.9, //show 10% candles on load
+        start: 1.5, //show 10% candles on load
+        autoZoom: true,
         renderer: am5xy.AxisRendererY.new(root, {
           pan: "zoom",
         }),
@@ -311,7 +344,10 @@ const NewStockChart = () => {
 
     let dateAxis = mainPanel.xAxes.push(
       am5xy.GaplessDateAxis.new(root, {
-        start: 0.9, //show 10% candles on load
+        start: 0.9, //show  10% candles on load
+        // minZoomCount: 4,
+        // groupData: true,
+        // groupCount: 30,
         baseInterval: {
           timeUnit: "minute",
           count: 1,
