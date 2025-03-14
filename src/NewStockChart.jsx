@@ -4,7 +4,7 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import * as am5stock from "@amcharts/amcharts5/stock";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
-
+import './style.scss';
 
 const NewStockChart = () => {
   let root = null;
@@ -151,27 +151,8 @@ const NewStockChart = () => {
       .then(function (result) {
         // Set data on all series of the chart
         // const res = am5.JSONParser.parse(result.response);
-        // console.log('resut', JSON.parse(result.response));
         let res = JSON.parse(result.response)
 
-        // if (!res || !res.data || !Array.isArray(res.data)) {
-        //   throw new Error('Invalid response data');
-        // }
-
-        // // Process data (convert dates and values)
-        // let processor = am5.DataProcessor.new(root, {
-        //   dateFields: ["Date"],
-        //   //dateFormat: "yyyy-MM-dd",
-        //   numericFields: [
-        //     "Open",
-        //     "High",
-        //     "Low",
-        //     "Close",
-        //     "Adj Close",
-        //     "Volume",
-        //   ],
-        // });
-        // processor.processMany(res);
 
         const chartData = res.map((item) => {
           return {
@@ -183,32 +164,45 @@ const NewStockChart = () => {
             Volume: parseFloat(item[5]),
           };
         });
-
-
-        // const res = am5.JSONParser.parse(result.response);
-        // const chartData = res.data.map((item) => {
-        //   return {
-        //     Date: new Date(item.time).getTime(),
-        //     Open: parseFloat(item.open),
-        //     High: parseFloat(item.high),
-        //     Low: parseFloat(item.low),
-        //     Close: parseFloat(item.close),
-        //     Volume: parseFloat(item.volume),
-        //   };
-        // });
-
-
-        // // Set data
-        // am5.array.each(series, function (item) {
-        //   item.data.setAll(chartData);
-        // });
-
-        //2nd series parameter
+        // Load the first 50 candles initially
         series.data.setAll(chartData);
+        // //2nd series parameter
+        // series.data.setAll(chartData);
 
       });
 
   }
+
+
+  const loadAdditionalData = (series, axis) => {
+    const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&limit=1000&interval=1m';
+  
+    am5.net
+      .load(url)
+      .then((result) => {
+        let res = JSON.parse(result.response);
+  
+        const newChartData = res.map((item) => {
+          return {
+            Date: new Date(item[0]).getTime(),
+            RealDate: new Date(item[0]),
+            Open: parseFloat(item[1]),
+            High: parseFloat(item[2]),
+            Low: parseFloat(item[3]),
+            Close: parseFloat(item[4]),
+            Volume: parseFloat(item[5]),
+          };
+        });
+  
+        // Append new data to existing chart data
+        series.data.insertIndex(0, ...newChartData); // Add new candles at the beginning
+  
+        // Update the axis range to include new data
+        axis.set("start", 0.1); // Adjust this based on how much you want to zoom
+        axis.set("end", 1.0);
+      });
+  };
+  
 
 
   const newChartSetup = () => {
@@ -352,6 +346,16 @@ const NewStockChart = () => {
           timeUnit: "minute",
           count: 1,
         },
+        // gridIntervals: [
+        //   { timeUnit: "minute", count: 1 },
+        //   { timeUnit: "minute", count: 5 },
+        //   { timeUnit: "minute", count: 10 },
+        //   { timeUnit: "minute", count: 15 },
+        //   { timeUnit: "minute", count: 100 },
+        //   { timeUnit: "day", count: 1 },
+        //   { timeUnit: "day", count: 1 },
+        //   { timeUnit: "month", count: 1 },
+        // ],
         renderer: am5xy.AxisRendererX.new(root, {
           pan: "zoom",
         }),
@@ -359,6 +363,31 @@ const NewStockChart = () => {
         end: 1.1, // increase the end value to add space on the right side
       })
     );
+
+console.log(dateAxis.events);
+
+    dateAxis.events.on("rangechanged", (ev) => {
+      const axis = ev.target;
+
+      console.log("range changed", axis);
+      
+    
+      // Check if the user scrolled to the leftmost point
+      if (axis.get("start") === 0) {
+        loadAdditionalData(valueSeries, axis);
+      }
+    });
+    mainPanel.events.on("wheelended", (ev) => {
+      const axis = ev.target;
+
+      console.log("wheel changed", axis);
+      
+    
+      // Check if the user scrolled to the leftmost point
+      if (axis.get("start") === 0) {
+        loadAdditionalData(valueSeries, axis);
+      }
+    });
 
     // add range which will show current value
     currentValueDataItem = valueAxis.createAxisRange(valueAxis.makeDataItem({ value: 0 }));
@@ -524,7 +553,7 @@ const NewStockChart = () => {
     //   cornerRadiusBL: 100
     // });
 
-    mainPanel.set("scrollbarX", scrollbarX);
+    // mainPanel.set("scrollbarX", scrollbarX);
 
 
     var seriesSwitcher = am5stock.SeriesTypeControl.new(root, {
@@ -625,17 +654,32 @@ const NewStockChart = () => {
         //     stockChart: stockChart
         // }),
         // intervalSwitcher,
+        // am5stock.IndicatorControl.new(root, {
+        //   stockChart: stockChart,
+        //   // legend: valueLegend,
+        // }),
+        // am5stock.DrawingControl.new(root, {
+        //   stockChart: stockChart,
+        // }),
+        // am5stock.ResetControl.new(root, {
+        //   stockChart: stockChart,
+        // }),
+        // am5stock.SettingsControl.new(root, {
+        //   stockChart: stockChart,
+        // }),
+        // am5stock.DataSaveControl.new(root, {
+        //   stockChart: stockChart,
+        // }),
         am5stock.IndicatorControl.new(root, {
           stockChart: stockChart,
-          // legend: valueLegend,
         }),
         am5stock.DrawingControl.new(root, {
           stockChart: stockChart,
-        }),
-        am5stock.ResetControl.new(root, {
+        }), 
+        am5stock.SettingsControl.new(root, {
           stockChart: stockChart,
         }),
-        am5stock.SettingsControl.new(root, {
+        am5stock.ResetControl.new(root, {
           stockChart: stockChart,
         }),
       ],
